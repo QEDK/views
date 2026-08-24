@@ -12,11 +12,19 @@ const BELL_NOTES = [69, 72, 74, 76, 79, 81];
 
 const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
 
+/** 0.1s of 8-bit silence, looped. See holdSession(). */
+const SILENCE =
+	"data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
+
 /**
  * Generative ambient pad: a slow chord loop through a lowpass into a noise
  * reverb, with an occasional bell on top. Nothing is sampled or streamed.
- * Browsers block audio until a gesture, so `resume` is safe to call repeatedly
- * and only lights the engine once the context is actually running.
+ *
+ * Mobile needs two things desktop does not: the AudioContext must be built
+ * inside a real user gesture (Safari yields a permanently silent context
+ * otherwise), and a media element has to be playing or iOS routes Web Audio
+ * through the "ambient" session, which the ringer switch silences. `start` is
+ * safe to call on every gesture and only lights the engine once.
  */
 export class Ambient {
 	started = false;
@@ -29,14 +37,18 @@ export class Ambient {
 	private chordTO: ReturnType<typeof setTimeout> | undefined;
 	private bellTO: ReturnType<typeof setTimeout> | undefined;
 	private level = -1;
+	private vol = 0.7;
+	private muted = false;
+	private session: HTMLAudioElement | null = null;
 	private dead = false;
 
-	constructor() {
+	/** Build the graph. Must run inside a user gesture on iOS. */
+	private build() {
 		const Ctor =
 			window.AudioContext ??
 			(window as { webkitAudioContext?: typeof AudioContext })
 				.webkitAudioContext;
-		if (!Ctor) return;
+		if (!Ctor) return false;
 		const ac = new Ctor();
 		this.ac = ac;
 		const master = ac.createGain();
@@ -54,32 +66,63 @@ export class Ambient {
 		verb.connect(wet);
 		wet.connect(master);
 		this.verb = verb;
-		this.resume();
+		this.apply();
+		return true;
 	}
 
 	destroy() {
 		this.dead = true;
 		clearTimeout(this.chordTO);
 		clearTimeout(this.bellTO);
+		this.session?.pause();
+		this.session = null;
 		try {
 			this.ac?.close();
 		} catch {}
 	}
 
-	resume = () => {
+	/** Call from a user gesture. Safe to call repeatedly. */
+	start = () => {
+		if (this.dead) return;
+		if (!this.ac && !this.build()) return;
 		const ac = this.ac;
-		if (!ac || this.dead) return;
-		if (ac.state === "suspended") ac.resume().then(this.engineOn, () => {});
-		else this.engineOn();
+		if (!ac) return;
+		this.holdSession();
+		if (ac.state === "running") this.engineOn();
+		else ac.resume().then(this.engineOn, () => {});
 	};
 
 	setLevel(vol: number, muted: boolean) {
+		this.vol = vol;
+		this.muted = muted;
+		this.apply();
+	}
+
+	/**
+	 * A looping silent element keeps iOS in the "playback" audio session, so the
+	 * ringer switch stops silencing us. Released while muted so we are not
+	 * needlessly interrupting whatever else the phone is playing.
+	 */
+	private holdSession() {
+		if (this.muted) return;
+		if (!this.session) {
+			const el = new Audio(SILENCE);
+			el.loop = true;
+			el.setAttribute("playsinline", "");
+			this.session = el;
+		}
+		this.session.play().catch(() => {});
+	}
+
+	private apply() {
 		const ac = this.ac;
 		if (!ac || !this.master) return;
-		const want = muted ? 0 : Math.max(0, Math.min(1, vol)) * 0.8;
+		const want = this.muted ? 0 : Math.max(0, Math.min(1, this.vol)) * 0.8;
 		if (Math.abs(this.level - want) < 0.001) return;
 		this.level = want;
 		this.master.gain.setTargetAtTime(want, ac.currentTime, 0.4);
+		if (want === 0) this.session?.pause();
+		else this.holdSession();
 	}
 
 	bell() {

@@ -99,7 +99,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 		const field = new Field(canvas, spacer, {
 			onNavShow: showNav,
 			onNavHide: hideNavNow,
-			onGesture: audio.resume,
+			onGesture: audio.start,
 		});
 		fieldRef.current = field;
 		setView(field.roll(true));
@@ -123,7 +123,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 
 		const gestures = ["pointerdown", "keydown", "touchend"] as const;
 		window.addEventListener("mousemove", onMove, { passive: true });
-		for (const g of gestures) window.addEventListener(g, audio.resume);
+		for (const g of gestures) window.addEventListener(g, audio.start);
 
 		setClock(clockStr());
 		const clockIV = setInterval(() => setClock(clockStr()), 15000);
@@ -133,7 +133,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 			field.destroy();
 			audio.destroy();
 			window.removeEventListener("mousemove", onMove);
-			for (const g of gestures) window.removeEventListener(g, audio.resume);
+			for (const g of gestures) window.removeEventListener(g, audio.start);
 			clearInterval(clockIV);
 			cancelAnimationFrame(intro);
 			clearTimeout(navTimer.current);
@@ -179,7 +179,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 	const toggleMute = () => {
 		const audio = audioRef.current;
 		const started = audio?.started ?? false;
-		audio?.resume();
+		audio?.start();
 		// the first press is really "turn the sound on", whatever the icon says
 		if (!started) {
 			setMuted(false);
@@ -393,7 +393,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 										} as CSSProperties
 									}
 									onChange={(e) => {
-										audioRef.current?.resume();
+										audioRef.current?.start();
 										const v = Number.parseFloat(e.target.value);
 										setVol(v);
 										setMuted(v <= 0);
