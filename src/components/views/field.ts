@@ -295,7 +295,7 @@ export class Field {
 	private t0 = 0;
 	private frame = 0;
 	private bright = false;
-	private pixel = new Uint8Array(4);
+	private row: Uint8Array | null = null;
 	private dead = false;
 
 	constructor(
@@ -492,15 +492,18 @@ export class Field {
 			0,
 			Math.min(c.height - 1, c.height - Math.round(46 * dpr)),
 		);
+		// One readPixels for the whole row, then sample it in JS. Each readPixels
+		// forces a synchronous GPU->CPU stall, so nine of them cost nine stalls.
+		if (!this.row || this.row.length < c.width * 4) {
+			this.row = new Uint8Array(c.width * 4);
+		}
+		const row = this.row;
+		gl.readPixels(0, y, c.width, 1, gl.RGBA, gl.UNSIGNED_BYTE, row);
 		let lum = 0;
 		for (let i = 0; i < 9; i++) {
-			const x = Math.min(c.width - 1, Math.round((c.width * (i + 0.5)) / 9));
-			gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, this.pixel);
-			lum +=
-				(0.299 * this.pixel[0] +
-					0.587 * this.pixel[1] +
-					0.114 * this.pixel[2]) /
-				255;
+			const o =
+				Math.min(c.width - 1, Math.round((c.width * (i + 0.5)) / 9)) * 4;
+			lum += (0.299 * row[o] + 0.587 * row[o + 1] + 0.114 * row[o + 2]) / 255;
 		}
 		lum /= 9;
 		this.bright = this.bright ? lum > 0.5 : lum > 0.6;

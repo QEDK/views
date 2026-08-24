@@ -445,7 +445,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 				ref={markRef}
 				className={`vw-mark vw-glass${up}`}
 				data-mag
-				aria-label="back to top"
+				aria-label="views. — back to top"
 				onClick={toTop}
 				onMouseEnter={pinNav}
 				onMouseLeave={unpinNav}

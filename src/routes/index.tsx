@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Views } from "#/components/views/Views";
+import fontUrl from "../components/views/space-grotesk.woff2?url";
 import viewsCss from "../components/views/views.css?url";
 
 const SITE = "https://views.qedk.sh";
@@ -37,15 +38,12 @@ export const Route = createFileRoute("/")({
 		],
 		links: [
 			{ rel: "canonical", href: SITE },
-			{ rel: "preconnect", href: "https://fonts.googleapis.com" },
 			{
-				rel: "preconnect",
-				href: "https://fonts.gstatic.com",
+				rel: "preload",
+				href: fontUrl,
+				as: "font",
+				type: "font/woff2",
 				crossOrigin: "anonymous",
-			},
-			{
-				rel: "stylesheet",
-				href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap",
 			},
 			{ rel: "stylesheet", href: viewsCss },
 		],
