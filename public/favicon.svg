@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12233a"/><stop offset="1" stop-color="#081426"/></linearGradient>
+<radialGradient id="blobA" cx=".24" cy=".22" r=".58"><stop offset="0" stop-color="#4fa3a5" stop-opacity=".95"/><stop offset="1" stop-color="#4fa3a5" stop-opacity="0"/></radialGradient>
+<radialGradient id="blobB" cx=".82" cy=".8" r=".62"><stop offset="0" stop-color="#1f4e6b" stop-opacity=".95"/><stop offset="1" stop-color="#1f4e6b" stop-opacity="0"/></radialGradient>
+<radialGradient id="blobC" cx=".72" cy=".18" r=".4"><stop offset="0" stop-color="#bfe3d0" stop-opacity=".5"/><stop offset="1" stop-color="#bfe3d0" stop-opacity="0"/></radialGradient>
+<linearGradient id="tint" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".17"/><stop offset=".55" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>
+<linearGradient id="sheen" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="17"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".32"/></linearGradient>
+<clipPath id="chip"><rect width="64" height="64" rx="14"/></clipPath>
+</defs>
+<g clip-path="url(#chip)">
+<rect width="64" height="64" fill="url(#base)"/>
+<rect width="64" height="64" fill="url(#blobA)"/>
+<rect width="64" height="64" fill="url(#blobB)"/>
+<rect width="64" height="64" fill="url(#blobC)"/>
+<rect width="64" height="64" fill="url(#tint)"/>
+<path d="M0 0h64v17C46 27 18 27 0 17Z" fill="url(#sheen)"/>
+</g>
+<g transform="translate(6.40 48.15) scale(0.06845 -0.06845)" fill="#fff">
+<path d="M220 0 38 486H102L262 46H274L434 486H498L316 0Z"/>
+<path d="M117 -14Q92 -14 76 2Q60 18 60 43Q60 68 76 84Q92 100 117 100Q142 100 158 84Q174 68 174 43Q174 18 158 2Q142 -14 117 -14Z" transform="translate(536 0)"/>
+</g>
+<rect x=".5" y=".5" width="63" height="63" rx="13.5" fill="none" stroke="url(#rim)" stroke-width="1"/>
+</svg>

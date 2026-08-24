@@ -43,7 +43,6 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 	const [navUp, setNavUp] = useState(false);
 	const [menu, setMenu] = useState<"closed" | "open" | "closing">("closed");
 	const [muted, setMuted] = useState(false);
-	const [soundPending, setSoundPending] = useState(true);
 	const [vol, setVol] = useState(volume);
 	const [toast, setToast] = useState<string | null>(null);
 
@@ -95,7 +94,7 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 		const spacer = spacerRef.current;
 		if (!canvas || !spacer) return;
 
-		const audio = new Ambient(() => setSoundPending(false));
+		const audio = new Ambient();
 		audioRef.current = audio;
 		const field = new Field(canvas, spacer, {
 			onNavShow: showNav,
@@ -212,17 +211,18 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 
 	/** At the top there is nothing to scroll back to, so the field exhales instead. */
 	const toTop = () => {
-		if (window.scrollY > 1) {
-			window.scrollTo({ top: 0, behavior: "smooth" });
-			return;
-		}
-		fieldRef.current?.nudge();
-		if (audioRef.current?.started && !muted) audioRef.current.bell();
 		const mark = markRef.current;
 		if (mark) {
+			// restart rather than replay: re-clicking mid-animation should retrigger
 			mark.style.animation = "none";
 			void mark.offsetWidth;
 			mark.style.animation = "vwBreath 1.1s cubic-bezier(.22,.61,.36,1)";
+		}
+		if (window.scrollY > 1) {
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		} else {
+			fieldRef.current?.nudge();
+			if (audioRef.current?.started && !muted) audioRef.current.bell();
 		}
 		showNav();
 	};
@@ -312,7 +312,6 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 									</>
 								)}
 							</Icon>
-							{soundPending && <span className="vw-pending" />}
 						</button>
 						<button
 							type="button"

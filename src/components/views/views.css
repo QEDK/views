@@ -66,18 +66,6 @@ body::after {
 		border-color 0.6s;
 }
 
-@keyframes vwPulse {
-	0%,
-	100% {
-		opacity: 0.95;
-		transform: scale(1);
-	}
-	50% {
-		opacity: 0.35;
-		transform: scale(0.72);
-	}
-}
-
 @keyframes vwToastIn {
 	from {
 		opacity: 0;
@@ -228,17 +216,6 @@ body::after {
 
 .vw-icon-btn:hover {
 	background-color: rgba(255, 255, 255, 0.14);
-}
-
-.vw-pending {
-	position: absolute;
-	top: 7px;
-	right: 8px;
-	width: 5px;
-	height: 5px;
-	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.95);
-	animation: vwPulse 2.4s ease-in-out infinite;
 }
 
 .vw-icon-in {
@@ -442,8 +419,8 @@ body::after {
 	border-radius: 999px;
 	background: linear-gradient(
 		90deg,
-		rgba(255, 255, 255, 0.72) var(--vw-fill, 70%),
-		rgba(255, 255, 255, 0.13) var(--vw-fill, 70%)
+		#ffffff var(--vw-fill, 70%),
+		#262d42 var(--vw-fill, 70%)
 	);
 	box-shadow:
 		inset 0 1px 3px rgba(8, 12, 24, 0.4),
@@ -456,13 +433,8 @@ body::after {
 	height: 18px;
 	border-radius: 50%;
 	margin-top: -5px;
-	background: radial-gradient(
-		circle at 34% 26%,
-		#fff,
-		rgba(255, 255, 255, 0.78) 60%,
-		rgba(255, 255, 255, 0.55)
-	);
-	border: 1px solid rgba(255, 255, 255, 0.7);
+	background: radial-gradient(circle at 34% 26%, #ffffff, #eef1f7 60%, #dbe0ec);
+	border: 1px solid #ffffff;
 	box-shadow:
 		0 3px 12px rgba(8, 12, 24, 0.45),
 		inset 0 1px 1px rgba(255, 255, 255, 0.95);
@@ -480,25 +452,21 @@ body::after {
 #vw-vol::-moz-range-track {
 	height: 8px;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.13);
+	background: #262d42;
 	box-shadow: inset 0 1px 3px rgba(8, 12, 24, 0.4);
 }
 
 #vw-vol::-moz-range-progress {
 	height: 8px;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.72);
+	background: #ffffff;
 }
 
 #vw-vol::-moz-range-thumb {
 	width: 16px;
 	height: 16px;
 	border-radius: 50%;
-	background: radial-gradient(
-		circle at 34% 26%,
-		#fff,
-		rgba(255, 255, 255, 0.72)
-	);
-	border: 1px solid rgba(255, 255, 255, 0.7);
+	background: radial-gradient(circle at 34% 26%, #ffffff, #dbe0ec);
+	border: 1px solid #ffffff;
 	box-shadow: 0 3px 12px rgba(8, 12, 24, 0.45);
 }

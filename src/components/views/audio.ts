@@ -31,7 +31,7 @@ export class Ambient {
 	private level = -1;
 	private dead = false;
 
-	constructor(private onStart: () => void) {
+	constructor() {
 		const Ctor =
 			window.AudioContext ??
 			(window as { webkitAudioContext?: typeof AudioContext })
@@ -102,7 +102,6 @@ export class Ambient {
 	private engineOn = () => {
 		if (this.started || this.dead || this.ac?.state !== "running") return;
 		this.started = true;
-		this.onStart();
 		this.chordI = 0;
 		this.nextChord();
 		this.nextBell();
