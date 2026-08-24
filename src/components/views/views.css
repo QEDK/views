@@ -1,0 +1,504 @@
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: #0e1220;
+	overscroll-behavior-y: none;
+}
+
+html {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+	display: none;
+}
+
+body {
+	-webkit-tap-highlight-color: transparent;
+	overflow-x: hidden;
+	font-family: "Space Grotesk", sans-serif;
+}
+
+/* the app-shell theme paints its own gradients on the body pseudos */
+body::before,
+body::after {
+	content: none;
+}
+
+/* Glass tone flips when the field behind it turns bright, so the chrome stays
+   readable over both a pale dune and a near-black nebula. */
+:root {
+	--vw-glass: linear-gradient(
+		135deg,
+		rgba(255, 255, 255, 0.17),
+		rgba(255, 255, 255, 0.05) 55%,
+		rgba(255, 255, 255, 0.12)
+	);
+	--vw-glass-line: rgba(255, 255, 255, 0.28);
+}
+
+:root[data-vw-bright] {
+	--vw-glass: linear-gradient(
+		135deg,
+		rgba(13, 18, 34, 0.52),
+		rgba(13, 18, 34, 0.3) 55%,
+		rgba(13, 18, 34, 0.46)
+	);
+	--vw-glass-line: rgba(255, 255, 255, 0.42);
+}
+
+.vw-glass {
+	background-color: transparent;
+	background-image: var(--vw-mag, none), var(--vw-glass);
+	border: 1px solid var(--vw-glass-line);
+	backdrop-filter: blur(24px) saturate(1.7);
+	-webkit-backdrop-filter: blur(24px) saturate(1.7);
+	box-shadow:
+		0 14px 44px rgba(8, 12, 24, 0.22),
+		inset 0 1px 0 rgba(255, 255, 255, 0.38),
+		inset 0 -1px 1px rgba(255, 255, 255, 0.07);
+	transition:
+		background-color 0.6s,
+		border-color 0.6s;
+}
+
+@keyframes vwPulse {
+	0%,
+	100% {
+		opacity: 0.95;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.35;
+		transform: scale(0.72);
+	}
+}
+
+@keyframes vwToastIn {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 12px);
+	}
+	to {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+}
+
+@keyframes vwIconIn {
+	from {
+		opacity: 0;
+		transform: scale(0.45) rotate(-40deg);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) rotate(0deg);
+	}
+}
+
+@keyframes vwBreath {
+	0% {
+		box-shadow:
+			0 14px 44px rgba(8, 12, 24, 0.22),
+			inset 0 1px 0 rgba(255, 255, 255, 0.38),
+			0 0 0 0 rgba(255, 255, 255, 0.34);
+	}
+	55% {
+		box-shadow:
+			0 14px 44px rgba(8, 12, 24, 0.22),
+			inset 0 1px 0 rgba(255, 255, 255, 0.6),
+			0 0 0 14px rgba(255, 255, 255, 0);
+	}
+	100% {
+		box-shadow:
+			0 14px 44px rgba(8, 12, 24, 0.22),
+			inset 0 1px 0 rgba(255, 255, 255, 0.38),
+			0 0 0 0 rgba(255, 255, 255, 0);
+	}
+}
+
+@keyframes vwMenuIn {
+	from {
+		opacity: 0;
+		transform: scale(0.92) translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+@keyframes vwMenuOut {
+	from {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.94) translateY(-6px);
+	}
+}
+
+.vw-canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	display: block;
+	z-index: 0;
+}
+
+.vw-spacer {
+	pointer-events: none;
+}
+
+.vw-nav,
+.vw-mark {
+	position: fixed;
+	z-index: 40;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-14px);
+	transition:
+		opacity 0.8s cubic-bezier(0.22, 0.61, 0.36, 1),
+		transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1),
+		visibility 0.8s,
+		background-color 0.6s,
+		border-color 0.6s;
+}
+
+.vw-nav.is-up,
+.vw-mark.is-up {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+
+.vw-nav {
+	top: 0;
+	left: 0;
+	right: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	padding: 22px 24px;
+	pointer-events: none;
+}
+
+.vw-dock {
+	pointer-events: auto;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 10px;
+}
+
+.vw-pill {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px;
+	border-radius: 999px;
+}
+
+.vw-icon-btn {
+	/* custom properties inherit, so clear the pill's hover light off its children */
+	--vw-mag: initial;
+	position: relative;
+	width: 44px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: none;
+	border-radius: 999px;
+	background-color: transparent;
+	background-image: var(--vw-mag, none);
+	color: rgba(255, 255, 255, 0.95);
+	cursor: pointer;
+	transition: background-color 0.25s;
+}
+
+.vw-icon-btn:hover {
+	background-color: rgba(255, 255, 255, 0.14);
+}
+
+.vw-pending {
+	position: absolute;
+	top: 7px;
+	right: 8px;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.95);
+	animation: vwPulse 2.4s ease-in-out infinite;
+}
+
+.vw-icon-in {
+	animation: vwIconIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vw-menu {
+	transform-origin: top right;
+	animation: vwMenuIn 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
+	width: 252px;
+	max-height: calc(100vh - 160px);
+	overflow-y: auto;
+	border-radius: 22px;
+	padding: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	box-shadow:
+		0 22px 60px rgba(8, 12, 24, 0.3),
+		inset 0 1px 0 rgba(255, 255, 255, 0.38),
+		inset 0 -1px 1px rgba(255, 255, 255, 0.07);
+}
+
+.vw-menu.is-closing {
+	animation: vwMenuOut 0.22s ease forwards;
+}
+
+.vw-menu-meta {
+	padding: 10px 14px 4px;
+	font:
+		500 10.5px "Space Grotesk",
+		sans-serif;
+	letter-spacing: 0.16em;
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.vw-menu-item {
+	text-align: left;
+	width: 100%;
+	min-height: 44px;
+	padding: 12px 14px;
+	border: none;
+	background: transparent;
+	border-radius: 15px;
+	color: rgba(255, 255, 255, 0.94);
+	font:
+		400 13.5px "Space Grotesk",
+		sans-serif;
+	letter-spacing: 0.03em;
+	cursor: pointer;
+	transition: background 0.25s;
+}
+
+.vw-menu-item:hover,
+.vw-menu-link:hover {
+	background: rgba(255, 255, 255, 0.14);
+}
+
+.vw-rule {
+	height: 1px;
+	margin: 6px 10px;
+	background: rgba(255, 255, 255, 0.17);
+}
+
+.vw-vol-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 44px;
+	padding: 2px 14px 6px;
+}
+
+.vw-mute {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border-radius: 50%;
+	background: linear-gradient(
+		140deg,
+		rgba(255, 255, 255, 0.2),
+		rgba(255, 255, 255, 0.05)
+	);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.4),
+		0 2px 8px rgba(8, 12, 24, 0.22);
+	color: rgba(255, 255, 255, 0.94);
+	cursor: pointer;
+	transition: transform 0.18s;
+}
+
+.vw-mute:hover {
+	transform: scale(1.07);
+}
+
+.vw-menu-link {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 40px;
+	padding: 0 14px;
+	border-radius: 15px;
+	font:
+		400 13.5px "Space Grotesk",
+		sans-serif;
+	letter-spacing: 0.03em;
+	color: rgba(255, 255, 255, 0.94);
+	text-decoration: none;
+	transition: background 0.25s;
+}
+
+.vw-menu-link:hover {
+	color: #ffffff;
+}
+
+.vw-menu-link-tag {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	letter-spacing: 0.1em;
+	color: rgba(255, 255, 255, 0.55);
+}
+
+.vw-menu-note {
+	margin: 4px 14px 8px;
+	font:
+		300 11.5px / 1.65 "Space Grotesk",
+		sans-serif;
+	letter-spacing: 0.02em;
+	color: rgba(255, 255, 255, 0.66);
+}
+
+.vw-menu-note.is-dim {
+	margin: 0 14px 10px;
+	color: rgba(255, 255, 255, 0.45);
+}
+
+.vw-mark {
+	top: 22px;
+	left: 24px;
+	cursor: pointer;
+	user-select: none;
+	display: flex;
+	align-items: center;
+	height: 48px;
+	padding: 0 24px;
+	border-radius: 999px;
+	font:
+		300 19px "Space Grotesk",
+		sans-serif;
+	letter-spacing: 0.05em;
+	color: rgba(255, 255, 255, 0.95);
+	text-shadow: 0 1px 14px rgba(10, 14, 24, 0.35);
+}
+
+.vw-toast {
+	position: fixed;
+	bottom: 30px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 50;
+	pointer-events: none;
+	display: flex;
+	align-items: center;
+	height: 44px;
+	padding: 0 22px;
+	border-radius: 999px;
+	animation: vwToastIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+	font:
+		300 13px "Space Grotesk",
+		sans-serif;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.95);
+	text-shadow: 0 1px 12px rgba(10, 14, 24, 0.35);
+	white-space: nowrap;
+}
+
+#vw-vol {
+	-webkit-appearance: none;
+	appearance: none;
+	flex: 1;
+	min-width: 0;
+	height: 24px;
+	margin: 0;
+	background: transparent;
+	display: block;
+	cursor: pointer;
+}
+
+#vw-vol:focus {
+	outline: none;
+}
+
+#vw-vol::-webkit-slider-runnable-track {
+	height: 8px;
+	border-radius: 999px;
+	background: linear-gradient(
+		90deg,
+		rgba(255, 255, 255, 0.72) var(--vw-fill, 70%),
+		rgba(255, 255, 255, 0.13) var(--vw-fill, 70%)
+	);
+	box-shadow:
+		inset 0 1px 3px rgba(8, 12, 24, 0.4),
+		inset 0 -1px 0 rgba(255, 255, 255, 0.22);
+}
+
+#vw-vol::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	margin-top: -5px;
+	background: radial-gradient(
+		circle at 34% 26%,
+		#fff,
+		rgba(255, 255, 255, 0.78) 60%,
+		rgba(255, 255, 255, 0.55)
+	);
+	border: 1px solid rgba(255, 255, 255, 0.7);
+	box-shadow:
+		0 3px 12px rgba(8, 12, 24, 0.45),
+		inset 0 1px 1px rgba(255, 255, 255, 0.95);
+	transition: transform 0.18s;
+}
+
+#vw-vol:hover::-webkit-slider-thumb {
+	transform: scale(1.14);
+}
+
+#vw-vol:active::-webkit-slider-thumb {
+	transform: scale(0.96);
+}
+
+#vw-vol::-moz-range-track {
+	height: 8px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.13);
+	box-shadow: inset 0 1px 3px rgba(8, 12, 24, 0.4);
+}
+
+#vw-vol::-moz-range-progress {
+	height: 8px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.72);
+}
+
+#vw-vol::-moz-range-thumb {
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: radial-gradient(
+		circle at 34% 26%,
+		#fff,
+		rgba(255, 255, 255, 0.72)
+	);
+	border: 1px solid rgba(255, 255, 255, 0.7);
+	box-shadow: 0 3px 12px rgba(8, 12, 24, 0.45);
+}
