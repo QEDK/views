@@ -66,7 +66,7 @@ async function loadFont(px: number) {
 	} catch {}
 }
 
-async function renderBlob(frame: Frame) {
+export async function renderBlob(frame: Frame) {
 	await loadFont(86);
 	const out = compose(frame);
 	const blob = await new Promise<Blob | null>((res) =>

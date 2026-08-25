@@ -7,7 +7,7 @@ import {
 } from "react";
 import { Ambient } from "./audio";
 import { Field, type View } from "./field";
-import { copyImage, downloadImage, type Frame } from "./snapshot";
+import { copyImage, downloadImage, type Frame, renderBlob } from "./snapshot";
 
 type ViewsProps = {
 	/** speed of the field's internal time */
@@ -30,6 +30,27 @@ const MAG_LIGHT = (x: string, y: number) =>
 	`radial-gradient(160px 120px at ${x}% ${y - 40}%, rgba(255,255,255,.12), rgba(255,255,255,0) 70%)`;
 
 const SPEAKER = "M11 5.5 6.8 9H4v6h2.8L11 18.5z";
+
+/**
+ * Whether to hand off to the OS share sheet instead of the X web intent. Asked
+ * synchronously, while the click still counts as user activation, and probed
+ * with a throwaway file rather than the real render.
+ *
+ * Gated on a coarse pointer so desktop keeps the intent link: Chrome on Windows
+ * and Safari on macOS both advertise file sharing, but there the sheet is a
+ * detour and the intent goes straight to a compose box.
+ */
+const preferShareSheet = () => {
+	if (typeof navigator === "undefined" || !navigator.canShare) return false;
+	if (!window.matchMedia?.("(pointer: coarse)").matches) return false;
+	try {
+		return navigator.canShare({
+			files: [new File([new Uint8Array(1)], "v.png", { type: "image/png" })],
+		});
+	} catch {
+		return false;
+	}
+};
 
 export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -256,18 +277,43 @@ export function Views({ motion = 2, fadeDelay = 4, volume = 0.7 }: ViewsProps) {
 
 	const onShare = async () => {
 		closeMenu();
+		const f = frame();
+		if (!f) return;
+		const caption = `${label()} · views.qedk.sh`;
+
+		// Phones: hand the image to the OS sheet, which lists the X app itself.
+		// A web intent would only ever land in the browser, and there is nothing
+		// to paste from on a touch keyboard.
+		if (preferShareSheet()) {
+			try {
+				const blob = await renderBlob(f);
+				const file = new File([blob], `${f.fileName()}.png`, {
+					type: "image/png",
+				});
+				await navigator.share({ files: [file], text: caption });
+				return;
+			} catch (e) {
+				if ((e as DOMException)?.name === "AbortError") return;
+			}
+		}
+
+		// Desktop: claim the tab now. Opening it after the await below would be
+		// past the user gesture, and the popup blocker eats it.
+		const tab = window.open("", "_blank");
 		const copied = await copy();
 		showToast(
 			copied
 				? "image copied — paste it into your post (ctrl / ⌘ + V)"
 				: "image downloaded — attach it to your post",
 		);
-		const text = `${label()} · views.qedk.sh\n\n[paste your image here — ctrl / ⌘ + V]`;
-		window.open(
-			`https://x.com/intent/post?text=${encodeURIComponent(text)}`,
-			"_blank",
-			"noopener",
-		);
+		const text = `${caption}\n\n[paste your image here — ctrl / ⌘ + V]`;
+		const url = `https://x.com/intent/post?text=${encodeURIComponent(text)}`;
+		if (tab) {
+			tab.opener = null;
+			tab.location.replace(url);
+		} else {
+			window.open(url, "_blank", "noopener");
+		}
 	};
 
 	const pinNav = () => {
